@@ -24,7 +24,7 @@ def make_files(names_input: str,cfg_input: str,base_dir: str,width,height):
 
 
     parser = YoloCfgParser()
-    parser.read("testcfgs/yolov4-tiny.cfg")
+    parser.read(cfg_input)
     parser.set_height(height)
     parser.set_width(width)
     parser.set_classes_and_filters(1)
@@ -118,8 +118,7 @@ class YoloCfgParser():
         yolo_sec_indexes = []
         for i,line in enumerate(self.cfg_iter):
             if re.match('\[yolo\]',line):
-                print(i)
-                print(line)
+
                 yolo_sec_indexes.append(i)
         return yolo_sec_indexes
     
@@ -127,8 +126,7 @@ class YoloCfgParser():
         filters_indexes = []
         for i,line in enumerate(self.cfg_iter):
             if re.match('filters',line):
-                print(i)
-                print(line)
+
                 filters_indexes.append(i)
 
         filters_indexes_to_change = []
