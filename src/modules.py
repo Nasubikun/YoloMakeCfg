@@ -1,6 +1,58 @@
 import re
+import os
+
+def make_files(names_input: str,cfg_input: str,base_dir: str,width,height):
+
+
+    input_file_dir = os.path.dirname(names_input)
+    input_name = os.path.splitext(os.path.basename(names_input))[0]
+
+
+    objs = pick_objs(names_input)
+    classes = len(objs)
+
+
+    with open(f"{input_file_dir}/{input_name}.names","w") as f:
+        for obj in objs:
+            f.write(obj)
+
+    data_list = make_data_file(base_dir, input_name,classes)
+
+    with open(f"{input_file_dir}/{input_name}.data","w") as f:
+        for line in data_list:
+            f.write(line)
+
+
+    parser = YoloCfgParser()
+    parser.read("testcfgs/yolov4-tiny.cfg")
+    parser.set_height(height)
+    parser.set_width(width)
+    parser.set_classes_and_filters(1)
+    parser.write(f"{input_file_dir}/{input_name}.cfg")
+
+def pick_objs(names_input):
+    objs = []
+
+    with open(names_input,"r") as f:
+
+        for line in f:
+            line.rstrip("\n")
+            if not line in ['\n','\r\n']:
+                objs.append(line)
+    return objs
+
+def make_data_file(base_dir,input_name,classes):
+    dst = []
+    dst.append(f"classes = {classes}\n")
+    dst.append(f'train = "{base_dir}train.txt"\n')
+    dst.append(f'valid  = "{base_dir}test.txt"\n')
+    dst.append(f'names = "{base_dir}{input_name}.names"\n')
+    dst.append(f'backup = "{base_dir}backup/"\n')
+    return dst
 
 class YoloCfgParser():
+
+    log = []
     def read(self,path: str):
         with open(path,'r') as f:
             self.raw_cfg = f.read()
@@ -10,27 +62,36 @@ class YoloCfgParser():
         with open(path,'w') as f:
             for line in self.cfg_iter:
                 f.write(line+"\n")
+        self.show_log()
+
+    def show_log(self):
+        for l in self.log:
+            print(f"{l[0]} : {l[1]} → {l[2]}")
 
     def show_raw(self):
         print(self.raw_cfg)
 
-    def _set_index_value(self,indexes: list,replace_txt: str):
+    def _add_log(self,line_number,before,after):
+        if before!=after:
+            self.log.append([line_number,before,after])
+
+    def _replace_text(self,indexes: list,new_text: str):
         for index in indexes:
-            self.cfg_iter[index] = replace_txt
+            self._add_log(index,self.cfg_iter[index], new_text)
+            self.cfg_iter[index] = new_text
 
     def _set_elem_value(self,element,value):
-        replace_txt = f"{element}={value}"
+        new_text = f"{element}={value}"
         replace_indexes = []
         pattern = f'{element}='
         compiled_pattern = re.compile(pattern)
         for i,line in enumerate(self.cfg_iter):
             if compiled_pattern.match(line):
                 replace_indexes.append(i)
-        for index in replace_indexes:
-            self.cfg_iter[index] = replace_txt
+        self._replace_text(replace_indexes, new_text)
 
     # def set_height(self,height):
-    #     replace_txt = f"height={height}"
+    #     new_text = f"height={height}"
     #     replace_indexes = []
     #     cfg_iter = self.cfg.split('\n')
     #     for i,line in enumerate(cfg_iter):
@@ -38,7 +99,7 @@ class YoloCfgParser():
     #             print(line)
     #             replace_indexes.append(i)
     #     for index in replace_indexes:
-    #         cfg_iter[index] = replace_txt
+    #         cfg_iter[index] = new_text
     #     self.cfg = "\n".join(cfg_iter)
     #     print(self.cfg)
     
@@ -86,5 +147,5 @@ class YoloCfgParser():
     def _set_filters(self,filters):
         yolo_sec_indexes = self._find_yolo_secs()
         filters_indexes_to_change = self._find_filters_to_change(yolo_sec_indexes)
-        replace_txt = f"filters={filters}"
-        self._set_index_value(filters_indexes_to_change,replace_txt)
+        new_text = f"filters={filters}"
+        self._replace_text(filters_indexes_to_change,new_text)

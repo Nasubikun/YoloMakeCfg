@@ -1,0 +1,5 @@
+classes = 2
+train = "test/train.txt"
+valid  = "test/test.txt"
+names = "test/test.names"
+backup = "test/backup/"

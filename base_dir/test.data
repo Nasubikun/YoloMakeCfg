@@ -1,5 +1,5 @@
 classes = 2
-train = "base_dir/train.txt"
-valid  = "base_dir/test.txt"
-names = "base_dir/test.names"
-backup = "base_dir/backup/"
+train = "test/hoge/train.txt"
+valid  = "test/hoge/test.txt"
+names = "test/hoge/test.names"
+backup = "test/hoge/backup/"
